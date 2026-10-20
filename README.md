@@ -79,9 +79,10 @@ This is intentional for visitor privacy. Do not enable public health-chat
 retention without user authentication, a privacy/retention policy, and
 appropriate legal and security review.
 
-1. Create a GitHub repository containing only this project folder and push it.
-   Do not push the `C:\Users\dell` home-directory repository. Do not include the
-   textbook PDF, `.env`, API keys, local database, or downloaded voice model.
+1. Use the published repository at
+   https://github.com/Dash6fat/ai-medical-chatbot-using-agentic. Do not push the
+   `C:\Users\dell` home-directory repository. Do not include the textbook PDF,
+   `.env`, API keys, local database, or downloaded voice model.
 2. In the Render Dashboard, create a Blueprint from that repository and select
    the project's `render.yaml` file.
 3. After deployment, test the generated `https://<service-name>.onrender.com`
@@ -96,9 +97,9 @@ appropriate legal and security review.
    `OPENAI_API_KEY` as a secret in Render's service environment; never commit it
    or paste it into chat.
 
-This repository currently has no Git remote or hosting credentials configured,
-and the requested subdomain does not resolve in public DNS yet. Creating the
-deployment files does not itself publish a website or prove DNS control.
+The project source is published on GitHub, but no Render website has been
+deployed. Publishing the source does not itself publish a website or prove DNS
+control.
 
 ## Endpoints
 
