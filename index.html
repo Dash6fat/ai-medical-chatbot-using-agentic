@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7fafc">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+    <title>Medical Agentic Chatbot</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #1c2935;
+        background: #f5f8fb;
+        font-synthesis: none;
+      }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 28px; }
+      main { width: min(820px, 100%); height: min(780px, calc(100vh - 56px)); min-height: 440px; display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid #e6ebf0; border-radius: 22px; box-shadow: 0 16px 50px #263d5212; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 23px 32px 19px; border-bottom: 1px solid #edf0f3; }
+      h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -.025em; }
+      header p { margin: 6px 0 0; color: #758392; font-size: .9rem; }
+      #new-chat { flex: none; padding: 9px 12px; border: 1px solid #dce5e9; border-radius: 9px; color: #405563; background: #fff; font: inherit; font-size: .8rem; cursor: pointer; }
+      #messages { flex: 1; overflow-y: auto; padding: 22px 30px; display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+      .message-row { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+      .message-row.user { align-items: flex-end; }
+      .message { max-width: min(88%, 600px); padding: 12px 16px; border-radius: 17px; background: #f0f4f7; color: #354451; font-size: .96rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .message-row.user .message { color: #fff; background: #146b70; }
+      .message-image { width: auto; max-width: min(240px, 70vw); max-height: 180px; border-radius: 12px; object-fit: cover; }
+      .error { color: #9d3939 !important; background: #fff1ef !important; }
+      .status { min-height: 19px; padding: 0 30px 6px; color: #788694; font-size: .79rem; }
+      .composer { padding: 12px 28px 0; border-top: 1px solid #edf0f3; }
+      textarea { display: block; width: 100%; min-height: 76px; max-height: 150px; resize: vertical; padding: 14px 15px; border: 1px solid #d9e0e6; border-radius: 13px; outline: none; color: #283642; font: inherit; font-size: .96rem; }
+      textarea:focus { border-color: #3a9292; box-shadow: 0 0 0 3px #3a92921a; }
+      textarea::placeholder { color: #87939e; }
+      .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 13px 0 15px; }
+      .tool, #send { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0; border-radius: 10px; background: #edf5f7; color: #354b57; font: inherit; font-size: .8rem; cursor: pointer; }
+      .tool:hover { background: #e3eff1; }
+      .tool:disabled { cursor: not-allowed; opacity: .55; }
+      #send { min-width: 94px; margin-left: auto; color: #fff; background: #147277; font-weight: 600; }
+      #send:hover { background: #105f64; }
+      #send:disabled { cursor: wait; opacity: .6; }
+      .tool svg { width: 16px; height: 16px; }
+      #image-preview { display: none; align-items: flex-start; gap: 9px; padding: 0 0 12px; }
+      #image-preview.visible { display: flex; }
+      #preview-image { width: 84px; height: 64px; border-radius: 8px; object-fit: cover; }
+      #preview-document { display: none; align-items: center; width: 84px; height: 64px; padding: 6px; border-radius: 8px; color: #354b57; background: #edf5f7; font-size: .75rem; text-align: center; overflow-wrap: anywhere; }
+      #remove-image { padding: 5px 9px; border: 0; border-radius: 8px; color: #596b77; background: #f0f4f6; font: inherit; font-size: .78rem; cursor: pointer; }
+      details { padding: 0 29px 17px; color: #63727f; font-size: .82rem; }
+      summary { width: fit-content; color: #657481; cursor: pointer; }
+      details p { max-width: 650px; margin: 9px 0 0; line-height: 1.5; }
+      details code { color: #344957; }
+      dialog { width: min(560px, calc(100vw - 32px)); padding: 18px; border: 1px solid #dce4e9; border-radius: 16px; color: #263642; box-shadow: 0 18px 60px #1c293544; }
+      dialog::backdrop { background: #182b3880; }
+      dialog h2 { margin: 0 0 12px; font-size: 1.1rem; }
+      #camera-video { display: block; width: 100%; max-height: 55vh; border-radius: 10px; background: #18232a; }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 13px; }
+      .dialog-actions button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: #edf3f5; color: #344957; font: inherit; cursor: pointer; }
+      .dialog-actions #capture-photo { color: white; background: #147277; }
+      @media (max-width: 580px) {
+        body { padding: 0; }
+        main { width: 100%; height: 100dvh; min-height: 0; border: 0; border-radius: 0; }
+        header { padding: 20px 19px 16px; }
+        #messages { padding: 19px; }
+        .composer { padding-right: 16px; padding-left: 16px; }
+        .status { padding-right: 18px; padding-left: 18px; }
+        details { padding-right: 17px; padding-left: 17px; }
+        .tool { padding: 0 11px; }
+        #send { min-width: 95px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Medical Agentic Chatbot</h1>
+          <p>Ask a general health question. Avoid sharing identifying information.</p>
+        </div>
+        <button id="new-chat" type="button">New chat</button>
+      </header>
+      <section id="messages" aria-live="polite" aria-label="Conversation">
+        <div class="message-row">
+          <div class="message">Hello! Describe your symptoms or ask a general health question. I can extract visible text from an image or PDF, but I cannot diagnose or replace a healthcare professional.</div>
+        </div>
+      </section>
+      <div id="status" class="status" role="status"></div>
+      <form id="chat-form" class="composer">
+        <div id="image-preview">
+          <img id="preview-image" alt="Selected image preview">
+          <span id="preview-document" aria-label="Selected PDF"></span>
+          <button id="remove-image" type="button">Remove file ×</button>
+        </div>
+        <textarea id="message" maxlength="4000" placeholder="Describe your symptoms or ask a question…" aria-label="Your message"></textarea>
+        <input id="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" hidden>
+        <div class="toolbar">
+          <button class="tool" id="attach-image" type="button" aria-label="Attach image or PDF">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 12.5 14.2 6a3.3 3.3 0 0 1 4.7 4.7l-8.1 8.1a5 5 0 0 1-7.1-7L12 3.5"/></svg> Image/PDF
+          </button>
+          <button class="tool" id="open-camera" type="button" aria-label="Take a photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg> Camera
+          </button>
+          <button class="tool" id="voice" type="button" aria-label="Dictate message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0m-6 6v4m-4 0h8"/></svg> Voice
+          </button>
+          <button class="tool" id="read-answer" type="button" aria-label="Read the last answer aloud">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M17 9a5 5 0 0 1 0 6m2.5-8.5a8.5 8.5 0 0 1 0 11"/></svg> Read answer
+          </button>
+          <button id="send" type="submit">Send <span aria-hidden="true">➜</span></button>
+        </div>
+      </form>
+      <details>
+        <summary>API access (optional)</summary>
+        <p id="api-status">Checking server configuration…</p>
+        <p id="storage-notice">Conversation storage is checking…</p>
+        <p>Without an API key, the app uses OCR to read visible text, including text inside PDF figures; OCR cannot recognize objects or interpret medical images. With a vision-capable model configured using <code>OPENAI_API_KEY</code>, it can summarize up to three figure-bearing PDF pages. Visual summaries are not diagnoses, and medical scans need clinician review. Your key is never entered in this page.</p>
+        <p><a href="/REFERENCES.md" target="_blank" rel="noreferrer">Medical information references</a>. The chatbot offers general information, not a diagnosis.</p>
+      </details>
+    </main>
+    <dialog id="camera-dialog" aria-labelledby="camera-title">
+      <h2 id="camera-title">Take a photo</h2>
+      <video id="camera-video" autoplay playsinline></video>
+      <div class="dialog-actions">
+        <button id="close-camera" type="button">Cancel</button>
+        <button id="capture-photo" type="button">Use photo</button>
+      </div>
+    </dialog>
+    <script>
+      const form = document.querySelector("#chat-form");
+      const input = document.querySelector("#message");
+      const messages = document.querySelector("#messages");
+      const send = document.querySelector("#send");
+      const status = document.querySelector("#status");
+      const fileInput = document.querySelector("#image-file");
+      const imagePreview = document.querySelector("#image-preview");
+      const previewImage = document.querySelector("#preview-image");
+      const previewDocument = document.querySelector("#preview-document");
+      const cameraDialog = document.querySelector("#camera-dialog");
+      const cameraVideo = document.querySelector("#camera-video");
+      const history = [];
+      const greeting = "Hello! Describe your symptoms or ask a general health question. I can extract visible text from an image or PDF, but I cannot diagnose or replace a healthcare professional.";
+      let selectedImage = null;
+      let selectedDocument = null;
+      let lastImageContext = null;
+      let cameraStream = null;
+      let voiceStream = null;
+      let audioContext = null;
+      let audioProcessor = null;
+      let recordingChunks = [];
+      let recordingActive = false;
+      let recordingTimer = null;
+      let lastAnswer = greeting;
+      let conversationId = null;
+      let persistenceEnabled = false;
+
+      function addMessage(role, content, image = null, isError = false) {
+        const row = document.createElement("div");
+        row.className = `message-row ${role}`;
+        if (image) {
+          const photo = document.createElement("img");
+          photo.className = "message-image";
+          photo.src = image;
+          photo.alt = "Image shared in chat";
+          row.append(photo);
+        }
+        const bubble = document.createElement("div");
+        bubble.className = `message${isError ? " error" : ""}`;
+        bubble.textContent = content;
+        row.append(bubble);
+        messages.append(row);
+        messages.scrollTop = messages.scrollHeight;
+        return bubble;
+      }
+
+      function chooseImage(dataUrl) {
+        selectedImage = dataUrl;
+        previewImage.style.display = "";
+        previewImage.src = dataUrl;
+        imagePreview.classList.add("visible");
+      }
+
+      function stopCamera() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+          cameraStream = null;
+        }
+        cameraVideo.srcObject = null;
+        if (cameraDialog.open) cameraDialog.close();
+      }
+
+      document.querySelector("#attach-image").addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        fileInput.value = "";
+        if (!file) return;
+        if (file.type === "application/pdf") {
+          if (file.size > 20 * 1024 * 1024) {
+            addMessage("assistant", "PDF files must be 20 MB or smaller.", null, true);
+            return;
+          }
+          const reader = new FileReader();
+          reader.addEventListener("load", () => {
+            selectedImage = null;
+            selectedDocument = reader.result;
+            previewImage.style.display = "none";
+            previewDocument.textContent = file.name;
+            previewDocument.style.display = "flex";
+            imagePreview.classList.add("visible");
+          });
+          reader.addEventListener("error", () => addMessage("assistant", "The selected PDF could not be read.", null, true));
+          reader.readAsDataURL(file);
+          return;
+        }
+        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+          addMessage("assistant", "Choose a JPEG, PNG, WebP, or GIF image.", null, true);
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          addMessage("assistant", "Images must be 5 MB or smaller.", null, true);
+          return;
+        }
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+          selectedDocument = null;
+          previewDocument.style.display = "none";
+          chooseImage(reader.result);
+        });
+        reader.addEventListener("error", () => addMessage("assistant", "The selected image could not be read.", null, true));
+        reader.readAsDataURL(file);
+      });
+
+      document.querySelector("#remove-image").addEventListener("click", () => {
+        selectedImage = null;
+        selectedDocument = null;
+        previewImage.removeAttribute("src");
+        previewImage.style.display = "";
+        previewDocument.textContent = "";
+        previewDocument.style.display = "none";
+        imagePreview.classList.remove("visible");
+      });
+
+      document.querySelector("#open-camera").addEventListener("click", async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          addMessage("assistant", "Camera access is unavailable. Open this page on localhost or use the Image button instead.", null, true);
+          return;
+        }
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+          cameraVideo.srcObject = cameraStream;
+          cameraDialog.showModal();
+        } catch (error) {
+          addMessage("assistant", `Could not open the camera: ${error.message || "permission was denied."}`, null, true);
+          stopCamera();
+        }
+      });
+      document.querySelector("#close-camera").addEventListener("click", stopCamera);
+      cameraDialog.addEventListener("cancel", stopCamera);
+      document.querySelector("#capture-photo").addEventListener("click", () => {
+        if (!cameraVideo.videoWidth) {
+          addMessage("assistant", "The camera is not ready yet. Please try again.", null, true);
+          return;
+        }
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1, 1600 / cameraVideo.videoWidth, 1600 / cameraVideo.videoHeight);
+        canvas.width = Math.round(cameraVideo.videoWidth * scale);
+        canvas.height = Math.round(cameraVideo.videoHeight * scale);
+        canvas.getContext("2d").drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+        chooseImage(canvas.toDataURL("image/jpeg", 0.82));
+        stopCamera();
+      });
+
+      const voiceButton = document.querySelector("#voice");
+      function encodePcmWave(chunks, sourceSampleRate) {
+        const length = chunks.reduce((total, chunk) => total + chunk.length, 0);
+        const samples = new Float32Array(length);
+        let offset = 0;
+        for (const chunk of chunks) {
+          samples.set(chunk, offset);
+          offset += chunk.length;
+        }
+
+        const targetSampleRate = 16000;
+        const outputLength = Math.floor(samples.length * targetSampleRate / sourceSampleRate);
+        const buffer = new ArrayBuffer(44 + outputLength * 2);
+        const view = new DataView(buffer);
+        const writeText = (position, text) => {
+          for (let index = 0; index < text.length; index += 1) {
+            view.setUint8(position + index, text.charCodeAt(index));
+          }
+        };
+        writeText(0, "RIFF");
+        view.setUint32(4, 36 + outputLength * 2, true);
+        writeText(8, "WAVE");
+        writeText(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, targetSampleRate, true);
+        view.setUint32(28, targetSampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeText(36, "data");
+        view.setUint32(40, outputLength * 2, true);
+        const ratio = sourceSampleRate / targetSampleRate;
+        for (let index = 0; index < outputLength; index += 1) {
+          const sourceIndex = Math.floor(index * ratio);
+          const fraction = index * ratio - sourceIndex;
+          const first = samples[sourceIndex] || 0;
+          const second = samples[Math.min(sourceIndex + 1, samples.length - 1)] || 0;
+          const sample = Math.max(-1, Math.min(1, first + (second - first) * fraction));
+          view.setInt16(44 + index * 2, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+        }
+        return new Blob([buffer], { type: "audio/wav" });
+      }
+
+      async function stopVoiceRecording() {
+        if (!recordingActive) return;
+        recordingActive = false;
+        clearTimeout(recordingTimer);
+        voiceButton.disabled = true;
+        voiceButton.setAttribute("aria-label", "Transcribing recording");
+        const chunks = recordingChunks;
+        recordingChunks = [];
+        const sampleRate = audioContext?.sampleRate || 16000;
+        if (audioProcessor) {
+          audioProcessor.disconnect();
+          audioProcessor.onaudioprocess = null;
+          audioProcessor = null;
+        }
+        if (voiceStream) {
+          voiceStream.getTracks().forEach((track) => track.stop());
+          voiceStream = null;
+        }
+        if (audioContext) {
+          await audioContext.close();
+          audioContext = null;
+        }
+
+        try {
+          const recording = encodePcmWave(chunks, sampleRate);
+          if (recording.size <= 44) throw new Error("No audio was recorded. Please try again.");
+          status.textContent = "Transcribing privately on this server…";
+          const response = await fetch("/api/voice", {
+            method: "POST",
+            headers: { "Content-Type": "audio/wav" },
+            body: recording,
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "Voice transcription failed.");
+          input.value = `${input.value.trim()} ${data.transcript}`.trim();
+          input.focus();
+          status.textContent = "Voice message added.";
+        } catch (error) {
+          status.textContent = error.message || "Voice transcription failed. You can type your message instead.";
+        } finally {
+          voiceButton.disabled = false;
+          voiceButton.setAttribute("aria-label", "Dictate message");
+        }
+      }
+
+      async function startVoiceRecording() {
+        if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) {
+          status.textContent = "Microphone recording is not supported here. Use localhost or HTTPS, or type your message.";
+          return;
+        }
+        voiceButton.disabled = true;
+        status.textContent = "Requesting microphone access…";
+        try {
+          voiceStream = await navigator.mediaDevices.getUserMedia({
+            audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+          });
+          audioContext = new AudioContext();
+          await audioContext.resume();
+          const source = audioContext.createMediaStreamSource(voiceStream);
+          audioProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+          recordingChunks = [];
+          audioProcessor.onaudioprocess = (event) => {
+            if (!recordingActive) return;
+            recordingChunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+            event.outputBuffer.getChannelData(0).fill(0);
+          };
+          source.connect(audioProcessor);
+          audioProcessor.connect(audioContext.destination);
+          recordingActive = true;
+          voiceButton.disabled = false;
+          voiceButton.setAttribute("aria-label", "Stop recording and transcribe");
+          status.textContent = "Recording… click Voice to finish (maximum 10 minutes). Audio is sent only to this app's server.";
+          recordingTimer = setTimeout(stopVoiceRecording, 600000);
+        } catch (error) {
+          if (audioProcessor) {
+            audioProcessor.disconnect();
+            audioProcessor.onaudioprocess = null;
+            audioProcessor = null;
+          }
+          if (voiceStream) {
+            voiceStream.getTracks().forEach((track) => track.stop());
+            voiceStream = null;
+          }
+          if (audioContext) {
+            await audioContext.close();
+            audioContext = null;
+          }
+          voiceButton.disabled = false;
+          status.textContent = `Could not start microphone: ${error.message || "permission was denied."}`;
+        }
+      }
+
+      voiceButton.addEventListener("click", () => {
+        if (recordingActive) stopVoiceRecording();
+        else startVoiceRecording();
+      });
+
+      document.querySelector("#read-answer").addEventListener("click", () => {
+        if (!lastAnswer) {
+          status.textContent = "There is no answer to read yet.";
+          return;
+        }
+        if (!("speechSynthesis" in window)) {
+          status.textContent = "Read-aloud is not supported by this browser.";
+          return;
+        }
+        const speech = window.speechSynthesis;
+        speech.cancel();
+        const utterance = new SpeechSynthesisUtterance(lastAnswer);
+        utterance.onstart = () => { status.textContent = "Reading answer aloud…"; };
+        utterance.onend = () => { status.textContent = ""; };
+        utterance.onerror = (event) => {
+          status.textContent = `Read aloud failed (${event.error}). Check your device's speech settings.`;
+        };
+        speech.resume();
+        speech.speak(utterance);
+      });
+
+      function startNewConversation() {
+        window.speechSynthesis?.cancel();
+        conversationId = null;
+        history.length = 0;
+        lastAnswer = greeting;
+        lastImageContext = null;
+        if (recordingActive) {
+          recordingActive = false;
+          clearTimeout(recordingTimer);
+          if (audioProcessor) {
+            audioProcessor.disconnect();
+            audioProcessor.onaudioprocess = null;
+          }
+          if (voiceStream) voiceStream.getTracks().forEach((track) => track.stop());
+          if (audioContext) audioContext.close();
+          audioProcessor = null;
+          voiceStream = null;
+          audioContext = null;
+          recordingChunks = [];
+          voiceButton.disabled = false;
+          voiceButton.setAttribute("aria-label", "Dictate message");
+        }
+        selectedImage = null;
+        selectedDocument = null;
+        input.value = "";
+        status.textContent = "";
+        previewImage.removeAttribute("src");
+        previewImage.style.display = "";
+        previewDocument.textContent = "";
+        previewDocument.style.display = "none";
+        imagePreview.classList.remove("visible");
+        try {
+          localStorage.removeItem("medical-chat-conversation-id");
+        } catch {
+          status.textContent = "Browser storage is blocked; this chat won't be restored after refresh.";
+        }
+        messages.replaceChildren();
+        addMessage("assistant", greeting);
+      }
+
+      document.querySelector("#new-chat").addEventListener("click", startNewConversation);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = input.value.trim();
+        if ((!message && !selectedImage && !selectedDocument) || send.disabled) return;
+
+        const documentForRequest = selectedDocument;
+        const imageForRequest = documentForRequest ? null : selectedImage || lastImageContext;
+        const prompt = message || (documentForRequest ? "Please read this PDF." : "Please describe this image.");
+        addMessage("user", documentForRequest ? `Attached PDF · ${previewDocument.textContent}` : prompt, selectedImage);
+        send.disabled = true;
+        status.textContent = "Thinking…";
+        const pending = addMessage("assistant", "Thinking…");
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              conversation_id: conversationId,
+              history: history.slice(-20),
+              image: imageForRequest,
+              document: documentForRequest,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "The request failed.");
+          pending.textContent = data.reply;
+          if (input.value.trim() === message) input.value = "";
+          lastAnswer = data.reply;
+          conversationId = data.conversation_id || null;
+          if (persistenceEnabled && conversationId) {
+            try {
+              localStorage.setItem("medical-chat-conversation-id", conversationId);
+            } catch {
+              status.textContent = "Browser storage is blocked; this chat won't be restored after refresh.";
+            }
+          } else {
+            try {
+              localStorage.removeItem("medical-chat-conversation-id");
+            } catch {
+              status.textContent = "Browser storage is blocked.";
+            }
+          }
+          history.push({ role: "user", content: prompt }, { role: "assistant", content: data.reply });
+          if (selectedImage && selectedImage === imageForRequest) {
+            lastImageContext = selectedImage;
+            selectedImage = null;
+            previewImage.removeAttribute("src");
+            imagePreview.classList.remove("visible");
+          }
+          if (selectedDocument && selectedDocument === documentForRequest) {
+            selectedDocument = null;
+            previewDocument.textContent = "";
+            previewDocument.style.display = "none";
+            previewImage.style.display = "";
+            imagePreview.classList.remove("visible");
+          }
+          if (data.mode === "offline") {
+            status.textContent = persistenceEnabled ? "Offline guidance · saved to this device" : "Offline guidance · this conversation is not saved";
+          } else if (!persistenceEnabled) {
+            status.textContent = "AI reply · this conversation is not saved";
+          } else {
+            status.textContent = "";
+          }
+        } catch (error) {
+          pending.textContent = error instanceof TypeError
+            ? "Could not reach the chatbot server. Check that it is running, then retry your upload."
+            : error.message || "The request failed. Please try again.";
+          pending.classList.add("error");
+          if (!input.value.trim()) input.value = message;
+          status.textContent = "";
+        } finally {
+          send.disabled = false;
+          input.focus();
+        }
+      });
+
+      async function restoreConversation() {
+        try {
+          if (!persistenceEnabled) return;
+          conversationId = localStorage.getItem("medical-chat-conversation-id");
+          if (!conversationId) return;
+          const response = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}`);
+          if (response.status === 404) {
+            localStorage.removeItem("medical-chat-conversation-id");
+            conversationId = null;
+            return;
+          }
+          if (!response.ok) throw new Error("Saved conversation could not be loaded.");
+          const saved = await response.json();
+          if (!Array.isArray(saved.messages) || saved.messages.length === 0) return;
+          messages.replaceChildren();
+          for (const item of saved.messages) {
+            addMessage(item.role, item.content);
+            history.push({ role: item.role, content: item.content });
+            if (item.role === "assistant") lastAnswer = item.content;
+          }
+        } catch {
+          status.textContent = "Saved chat could not be restored. You can start a new chat.";
+        }
+      }
+
+      fetch("/health")
+        .then((response) => {
+          if (!response.ok) throw new Error("Server status is unavailable.");
+          return response.json();
+        })
+        .then((data) => {
+          persistenceEnabled = data.conversation_persistence_enabled;
+          document.querySelector("#storage-notice").textContent = persistenceEnabled
+            ? "Conversation history is saved on the server. Do not enter information you would not want stored."
+            : "Conversation history is not saved on the server.";
+          document.querySelector("#api-status").textContent = data.openai_configured
+            ? `AI replies and ${data.voice_configured ? "offline voice" : "voice model unavailable"} are enabled. ${persistenceEnabled ? "Chat history is saved on the server." : "Public conversations are not saved."}`
+            : `Offline health guidance, image/PDF text extraction, and ${data.voice_configured ? "private offline voice" : "voice model unavailable"} are ready. ${persistenceEnabled ? "Chat history is saved on the server." : "Public conversations are not saved."} Add an API key for AI answers and optional image analysis.`;
+          restoreConversation();
+        })
+        .catch(() => {
+          document.querySelector("#api-status").textContent = "Could not check server configuration.";
+        });
+    </script>
+  </body>
+</html>
